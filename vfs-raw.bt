@@ -1,0 +1,18 @@
+#!/usr/bin/env bpftrace
+
+BEGIN
+{
+  time();
+}
+
+kprobe:vfs_fsync,
+kprobe:vfs_open,
+kprobe:vfs_create
+{
+  printf("ts=%lld", nsecs);
+}
+
+kprobe:vfs_read*,
+kprobe:vfs_write*,
+{
+}
