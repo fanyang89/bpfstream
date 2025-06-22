@@ -1,0 +1,17 @@
+{"type": "attached_probes", "data": {"probes": 11}}
+{"type": "time", "data": "23:18:48\n"}
+{"type": "map", "data": {"@": {"vfs_write": 25, "vfs_open": 142, "vfs_read": 273}}}
+{"type": "map", "data": {"@": {"vfs_readlink": 2, "vfs_write": 15, "vfs_open": 255, "vfs_read": 269}}}
+{"type": "map", "data": {"@": {"vfs_write": 35, "vfs_open": 155, "vfs_read": 319}}}
+{"type": "map", "data": {"@": {"vfs_readlink": 60, "vfs_write": 62, "vfs_read": 460, "vfs_open": 864}}}
+{"type": "map", "data": {"@": {"vfs_write": 23, "vfs_open": 50, "vfs_read": 68}}}
+{"type": "map", "data": {"@": {"vfs_write": 108, "vfs_open": 361, "vfs_read": 641}}}
+{"type": "map", "data": {"@": {"vfs_readlink": 2, "vfs_read": 99, "vfs_write": 115, "vfs_open": 142}}}
+{"type": "map", "data": {"@": {"vfs_open": 8, "vfs_write": 36, "vfs_read": 45}}}
+{"type": "map", "data": {"@": {"vfs_write": 57, "vfs_open": 155, "vfs_read": 339}}}
+{"type": "map", "data": {"@": {"vfs_readlink": 62, "vfs_write": 130, "vfs_read": 1333, "vfs_open": 1819}}}
+{"type": "map", "data": {"@": {"vfs_write": 184, "vfs_open": 708, "vfs_read": 1123}}}
+{"type": "map", "data": {"@": {"vfs_write": 106, "vfs_open": 198, "vfs_read": 355}}}
+{"type": "map", "data": {"@": {"vfs_readlink": 2, "vfs_read": 46, "vfs_write": 49, "vfs_open": 140}}}
+{"type": "map", "data": {"@": {"vfs_write": 12, "vfs_open": 129, "vfs_read": 264}}}
+{"type": "map", "data": {"@": {"vfs_readlink": 60, "vfs_write": 65, "vfs_read": 492, "vfs_open": 904}}}

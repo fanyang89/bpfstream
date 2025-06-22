@@ -1,0 +1,26 @@
+#!/usr/bin/env bpftrace
+
+BEGIN
+{
+  time();
+}
+
+kprobe:vfs_read*,
+kprobe:vfs_write*,
+kprobe:vfs_fsync,
+kprobe:vfs_open,
+kprobe:vfs_create
+{
+	@[func] = count();
+}
+
+interval:s:1
+{
+	print(@);
+	clear(@);
+}
+
+END
+{
+	clear(@);
+}
