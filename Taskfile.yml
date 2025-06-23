@@ -1,6 +1,10 @@
-version: '3'
+version: "3"
 
 tasks:
   default:
     cmds:
-    - sudo bpftrace -f json vfs-raw.bt
+      - sudo bpftrace -f json vfs-raw.bt
+
+  vmlinux:
+    cmds:
+      - bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux_types.h
