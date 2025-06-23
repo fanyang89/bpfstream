@@ -18,6 +18,7 @@ var vfsCmd = &cli.Command{
 	Name: "vfs",
 	Commands: []*cli.Command{
 		vfsCountCmd,
+		vfsRawCmd,
 	},
 }
 
