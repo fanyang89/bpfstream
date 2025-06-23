@@ -93,3 +93,7 @@ BTF_ID(func, vfs_getattr)
 BTF_ID(func, filp_close)
 BTF_SET_END(btf_allowlist_d_path)
 ```
+
+```
+{"type": "lost_events", "data": {"events": 67190}}
+```
