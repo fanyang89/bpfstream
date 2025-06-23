@@ -51,4 +51,45 @@ kretfunc:vmlinux:vfs_create
     umode_t mode
     bool want_excl
     int retval
+
+-> % sudo bpftrace -lv 'kretfunc:dentry_open'
+fexit:vmlinux:dentry_open
+    const struct path * path
+    int flags
+    const struct cred * cred
+    struct file * retval
+```
+
+```
+-> % sudo bpftrace -f json vfs-raw.bt
+{"type": "attached_probes", "data": {"probes": 6}}
+vfs-raw.bt:10:80-96: ERROR: helper bpf_d_path not allowed in probe
+  printf("ts=%lld, fn=vfs_open, rc=%d, pid=%d, path='%s'", nsecs, retval, pid, path(args->path));
+```
+
+```
+fentry:vmlinux:vfs_getattr
+    const struct path * path
+    struct kstat * stat
+    u32 request_mask
+    unsigned int query_flags
+    int retval
+```
+
+```
+BTF_SET_START(btf_allowlist_d_path)
+#ifdef CONFIG_SECURITY
+BTF_ID(func, security_file_permission)
+BTF_ID(func, security_inode_getattr)
+BTF_ID(func, security_file_open)
+#endif
+#ifdef CONFIG_SECURITY_PATH
+BTF_ID(func, security_path_truncate)
+#endif
+BTF_ID(func, vfs_truncate)
+BTF_ID(func, vfs_fallocate)
+BTF_ID(func, dentry_open)
+BTF_ID(func, vfs_getattr)
+BTF_ID(func, filp_close)
+BTF_SET_END(btf_allowlist_d_path)
 ```

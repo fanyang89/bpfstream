@@ -5,14 +5,15 @@ BEGIN
   time();
 }
 
-kprobe:vfs_fsync,
-kprobe:vfs_open,
-kprobe:vfs_create
+kfunc:vfs_open
+/comm == "zsh"/
 {
-  printf("ts=%lld", nsecs);
+  $name = str(args->path->dentry->d_name.name);
+  printf("ts=%lld, fn=%s, tid=%d, path='%s'", nsecs, probe, tid, $name);
 }
 
-kprobe:vfs_read*,
-kprobe:vfs_write*,
+kretfunc:vfs_open
+/comm == "zsh"/
 {
+  printf("ts=%lld, fn=%s, tid=%d, rc=%d", nsecs, probe, retval, tid);
 }
