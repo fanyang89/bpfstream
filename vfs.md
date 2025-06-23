@@ -97,3 +97,20 @@ BTF_SET_END(btf_allowlist_d_path)
 ```
 {"type": "lost_events", "data": {"events": 67190}}
 ```
+
+```
+https://manpages.ubuntu.com/manpages/noble/man8/bpftrace.8.html
+
+BPFTRACE_PERF_RB_PAGES
+    Default: 64
+
+    Number of pages to allocate per CPU for perf ring buffer. The value must be a power of 2.
+
+    If you’re getting a lot of dropped events bpftrace may not be processing events in the ring buffer fast
+    enough. It may be useful to bump the value higher so more events can be queued up. The tradeoff is that
+    bpftrace will use more memory.
+```
+
+```
+sudo bpftrace -f json vfs-raw.bt -B full -o testdata/vfs-raw.ndjson
+```
