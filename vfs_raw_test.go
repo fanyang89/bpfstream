@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// linux-amd64, cpu: AMD Ryzen 7 9700X 8-Core Processor
 // elapsed_ns=1104481628/4 rows=321039 ns_per_row=860 -> 1240694 ops
 func BenchmarkImportFromBpf(b *testing.B) {
 	ctx := context.Background()
