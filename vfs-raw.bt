@@ -9,35 +9,35 @@ kfunc:vfs_open
 {
   $name = str(args->path->dentry->d_name.name);
   $inode = args->path->dentry->d_inode->i_ino;
-  printf("ts=%lld, fn=%s, tid=%d, inode=%lld, path='%s'",
+  printf("ts=%lld fn=%s tid=%d inode=%lld path='%s'",
     nsecs, probe, tid, $inode, $name);
 }
 
 kretfunc:vfs_open
 {
-  printf("ts=%lld, fn=%s, tid=%d, rc=%d", nsecs, probe, tid, retval);
+  printf("ts=%lld fn=%s tid=%d rc=%d", nsecs, probe, tid, retval);
 }
 
 kfunc:vfs_create
 {
   $name = str(args->dentry->d_name.name);
-  printf("ts=%lld, fn=%s, tid=%d, path='%s'", nsecs, probe, tid, $name);
+  printf("ts=%lld fn=%s tid=%d path='%s'", nsecs, probe, tid, $name);
 }
 
 kretfunc:vfs_create
 {
-  printf("ts=%lld, fn=%s, tid=%d, rc=%d", nsecs, probe, tid, retval);
+  printf("ts=%lld fn=%s tid=%d rc=%d", nsecs, probe, tid, retval);
 }
 
 kfunc:vfs_fsync
 {
   $name = str(args->file->f_path.dentry->d_name.name);
-  printf("ts=%lld, fn=%s, tid=%d, path='%s'", nsecs, probe, tid, $name);
+  printf("ts=%lld fn=%s tid=%d path='%s'", nsecs, probe, tid, $name);
 }
 
 kretfunc:vfs_fsync
 {
-  printf("ts=%lld, fn=%s, tid=%d, rc=%d", nsecs, probe, tid, retval);
+  printf("ts=%lld fn=%s tid=%d rc=%d", nsecs, probe, tid, retval);
 }
 
 kfunc:vfs_read
@@ -45,39 +45,39 @@ kfunc:vfs_read
   $name = str(args->file->f_path.dentry->d_name.name);
   $len = args->count;
   $offset = *args->pos;
-  printf("ts=%lld, fn=%s, tid=%d, path='%s', offset=%lld, len=%ld",
+  printf("ts=%lld fn=%s tid=%d path='%s' offset=%lld len=%ld",
     nsecs, probe, tid, $name, $offset, $len);
 }
 
 kretfunc:vfs_read
 {
-  printf("ts=%lld, fn=%s, tid=%d, rc=%d", nsecs, probe, tid, retval);
+  printf("ts=%lld fn=%s tid=%d rc=%d", nsecs, probe, tid, retval);
 }
 
 kfunc:vfs_readv
 {
   $name = str(args->file->f_path.dentry->d_name.name);
   $offset = *args->pos;
-  printf("ts=%lld, fn=%s, tid=%d, path='%s', offset=%lld",
+  printf("ts=%lld fn=%s tid=%d path='%s' offset=%lld",
     nsecs, probe, tid, $name, $offset);
 }
 
 kretfunc:vfs_readv
 {
-  printf("ts=%lld, fn=%s, tid=%d, rc=%d", nsecs, probe, tid, retval);
+  printf("ts=%lld fn=%s tid=%d rc=%d", nsecs, probe, tid, retval);
 }
 
 kfunc:vfs_readlink
 {
   $name = str(args->dentry->d_name.name);
   $len = args->buflen;
-  printf("ts=%lld, fn=%s, tid=%d, path='%s', len=%ld",
+  printf("ts=%lld fn=%s tid=%d path='%s' len=%ld",
     nsecs, probe, tid, $name, $len);
 }
 
 kretfunc:vfs_readlink
 {
-  printf("ts=%lld, fn=%s, tid=%d, rc=%d", nsecs, probe, tid, retval);
+  printf("ts=%lld fn=%s tid=%d rc=%d", nsecs, probe, tid, retval);
 }
 
 kfunc:vfs_write
@@ -85,24 +85,24 @@ kfunc:vfs_write
   $name = str(args->file->f_path.dentry->d_name.name);
   $len = args->count;
   $offset = *args->pos;
-  printf("ts=%lld, fn=%s, tid=%d, path='%s', offset=%lld, len=%ld",
+  printf("ts=%lld fn=%s tid=%d path='%s' offset=%lld len=%ld",
     nsecs, probe, tid, $name, $offset, $len);
 }
 
 kretfunc:vfs_write
 {
-  printf("ts=%lld, fn=%s, tid=%d, rc=%d", nsecs, probe, tid, retval);
+  printf("ts=%lld fn=%s tid=%d rc=%d", nsecs, probe, tid, retval);
 }
 
 kfunc:vfs_writev
 {
   $name = str(args->file->f_path.dentry->d_name.name);
   $offset = *args->pos;
-  printf("ts=%lld, fn=%s, tid=%d, path='%s', offset=%lld",
+  printf("ts=%lld fn=%s tid=%d path='%s' offset=%lld",
     nsecs, probe, tid, $name, $offset);
 }
 
 kretfunc:vfs_writev
 {
-  printf("ts=%lld, fn=%s, tid=%d, rc=%d", nsecs, probe, tid, retval);
+  printf("ts=%lld fn=%s tid=%d rc=%d", nsecs, probe, tid, retval);
 }

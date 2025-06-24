@@ -3,7 +3,7 @@ version: "3"
 tasks:
   default:
     cmds:
-      - sudo bpftrace -f json vfs-raw.bt
+      - sudo bpftrace -b full -f json vfs-raw.bt
 
   vmlinux:
     cmds:
