@@ -8,3 +8,10 @@ tasks:
   vmlinux:
     cmds:
       - bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux_types.h
+
+  build-test:
+    env:
+      CGO_CFLAGS: -I/usr/include
+      CGO_LDFLAGS: -L/usr/include -lrocksdb -lstdc++ -lm -lz -lsnappy -llz4 -lzstd
+    cmds:
+      - go test -c

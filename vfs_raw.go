@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"fmt"
 	"io"
 	"os"
@@ -71,13 +71,66 @@ func (e *vfsEvent) HandleLogfmt(key []byte, val []byte) (err error) {
 	return
 }
 
-type appendRowFn = func(args ...driver.Value) error
+type appendRowFn = func(e *vfsEvent) error
 
-func (e *vfsEvent) Append(appendRow appendRowFn) error {
-	return appendRow(e.Timestamp, e.Probe, e.Tid, e.ReturnValue, e.Path, e.Inode, e.Offset, e.Length)
+// Ad-hoc parse for the best performance
+func simpleParseThenAppend(r io.Reader, appendRow appendRowFn) error {
+	const attachedProbeKeyword = `{"type": "attached_probes", "data": {"probes": `
+	const startTimeKeyword = `{"type": "time", "data": "`
+	const printfKeyword = `{"type": "printf", "data": "`
+	const lostEventsKeyword = `{"type": "lost_events", "data": {"events": `
+
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, attachedProbeKeyword) {
+			p := len(attachedProbeKeyword)
+			data := line[p : len(line)-len("}}")]
+			probes, err := strconv.ParseUint(data, 10, 64)
+			if err != nil {
+				return err
+			}
+			if probes <= 0 {
+				return errors.New("probes not attached")
+			}
+		} else if strings.HasPrefix(line, startTimeKeyword) {
+			p := len(startTimeKeyword)
+			data := line[p : len(line)-len(`\n"}`)]
+			startTime, err := time.Parse(time.TimeOnly, data)
+			if err != nil {
+				return err
+			}
+			log.Info().Str("start_time", startTime.Format(time.TimeOnly)).Msg("Record start from")
+		} else if strings.HasPrefix(line, printfKeyword) {
+			p := len(printfKeyword)
+			data := line[p : len(line)-len(`"}`)]
+			_ = data
+			var e vfsEvent
+			err := logfmt.Unmarshal([]byte(data), &e)
+			if err != nil {
+				return err
+			}
+			err = appendRow(&e)
+			if err != nil {
+				return err
+			}
+		} else if strings.HasPrefix(line, lostEventsKeyword) {
+			p := len(lostEventsKeyword)
+			data := line[p : len(line)-len(`}}`)]
+			lostEvents, err := strconv.ParseUint(data, 10, 64)
+			if err != nil {
+				return err
+			}
+			log.Info().Uint64("lost_events", lostEvents).Msg("Lost events")
+		} else {
+			panic("unreachable")
+		}
+	}
+
+	return nil
 }
 
-func writeToDuckDB(r io.Reader, appendRow appendRowFn) error {
+func jsonParseThenAppend(r io.Reader, appendRow appendRowFn) error {
 	var startTime time.Time
 
 	reuse := make(chan *simdjson.ParsedJson, 10)
@@ -141,7 +194,7 @@ func writeToDuckDB(r io.Reader, appendRow appendRowFn) error {
 				var e vfsEvent
 				err = logfmt.Unmarshal(buf, &e)
 				assert.NoError(err)
-				err = e.Append(appendRow)
+				err = appendRow(&e)
 				assert.NoError(err)
 			}
 
@@ -218,6 +271,9 @@ var vfsRawCmd = &cli.Command{
 			r = f
 		}
 
-		return writeToDuckDB(r, appender.AppendRow)
+		return jsonParseThenAppend(r, func(e *vfsEvent) error {
+			return appender.AppendRow(e.Timestamp, e.Probe, e.Tid, e.ReturnValue,
+				e.Path, e.Inode, e.Offset, e.Length)
+		})
 	},
 }
