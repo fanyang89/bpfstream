@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"io"
 	"os"
@@ -73,8 +74,88 @@ func (e *vfsEvent) HandleLogfmt(key []byte, val []byte) (err error) {
 	return
 }
 
-func (e *vfsEvent) Append(appender *duckdb.Appender) error {
-	return appender.AppendRow(e.Timestamp, e.Probe, e.Tid, e.ReturnValue, e.Path, e.Inode, e.Offset, e.Length)
+type appendRowFn = func(args ...driver.Value) error
+
+func (e *vfsEvent) Append(appendRow appendRowFn) error {
+	return appendRow(e.Timestamp, e.Probe, e.Tid, e.ReturnValue, e.Path, e.Inode, e.Offset, e.Length)
+}
+
+func writeToDuckDB(r io.Reader, appendRow appendRowFn) error {
+	var startTime time.Time
+
+	reuse := make(chan *simdjson.ParsedJson, 10)
+	res := make(chan simdjson.Stream, 10)
+	simdjson.ParseNDStream(r, res, reuse)
+
+	for got := range res {
+		err := got.Error
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+
+		err = got.Value.ForEach(func(iter simdjson.Iter) error {
+			var typeEl, dataEl *simdjson.Element
+			typeEl, err = iter.FindElement(typeEl, "type")
+			assert.NoError(err)
+			var typeStr string
+			typeStr, err = typeEl.Iter.String()
+			assert.NoError(err)
+			dataEl, err = iter.FindElement(dataEl, "data")
+			assert.NoError(err)
+
+			switch typeStr {
+			case "attached_probes":
+				var probesEl *simdjson.Element
+				probesEl, err = dataEl.Iter.FindElement(probesEl, "probes")
+				assert.NoError(err)
+				var probes int64
+				probes, err = probesEl.Iter.Int()
+				assert.NoError(err)
+				if probes <= 0 {
+					return errors.New("probes not attached")
+				}
+
+			case "time":
+				var timeStr string
+				assert.True(startTime.IsZero())
+				timeStr, err = dataEl.Iter.String()
+				assert.NoError(err)
+				timeStr = strings.TrimSpace(timeStr)
+				startTime, err = time.Parse(time.TimeOnly, timeStr)
+				assert.NoError(err)
+				log.Info().Str("start_time", startTime.Format(time.TimeOnly)).Msg("Record start from")
+
+			case "lost_events":
+				var eventCountEl *simdjson.Element
+				eventCountEl, err = dataEl.Iter.FindElement(eventCountEl, "events")
+				assert.NoError(err)
+				var lostEvents int64
+				lostEvents, err = eventCountEl.Iter.Int()
+				assert.NoError(err)
+				log.Info().Int64("lost_events", lostEvents).Msg("Lost events")
+
+			case "printf":
+				var buf []byte
+				buf, err = dataEl.Iter.StringBytes()
+				assert.NoError(err)
+				var e vfsEvent
+				err = logfmt.Unmarshal(buf, &e)
+				assert.NoError(err)
+				err = e.Append(appendRow)
+				assert.NoError(err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 var vfsRawCmd = &cli.Command{
@@ -138,71 +219,6 @@ var vfsRawCmd = &cli.Command{
 			r = f
 		}
 
-		var startTime time.Time
-
-		reuse := make(chan *simdjson.ParsedJson, 10)
-		res := make(chan simdjson.Stream, 10)
-		simdjson.ParseNDStream(r, res, reuse)
-
-		for got := range res {
-			err := got.Error
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				return err
-			}
-
-			err = got.Value.ForEach(func(iter simdjson.Iter) error {
-				var typeEl, dataEl *simdjson.Element
-				typeEl, err = iter.FindElement(typeEl, "type")
-				assert.NoError(err)
-				typeStr, err := typeEl.Iter.String()
-				assert.NoError(err)
-				dataEl, err = iter.FindElement(dataEl, "data")
-				assert.NoError(err)
-
-				switch typeStr {
-				case "attached_probes":
-					var probesEl *simdjson.Element
-					probesEl, err = dataEl.Iter.FindElement(probesEl, "probes")
-					assert.NoError(err)
-					probes, err := probesEl.Iter.Int()
-					assert.NoError(err)
-					if probes <= 0 {
-						return errors.New("probes not attached")
-					}
-
-				case "time":
-					assert.True(startTime.IsZero())
-					timeStr, err := dataEl.Iter.String()
-					assert.NoError(err)
-					timeStr = strings.TrimSpace(timeStr)
-					startTime, err = time.Parse(time.TimeOnly, timeStr)
-					assert.NoError(err)
-					log.Info().Str("start_time", startTime.Format(time.TimeOnly)).Msg("Record start from")
-
-				case "lost_events":
-					var eventCountEl *simdjson.Element
-					eventCountEl, err = dataEl.Iter.FindElement(eventCountEl, "events")
-					assert.NoError(err)
-					var lostEvents int64
-					lostEvents, err = eventCountEl.Iter.Int()
-					assert.NoError(err)
-					log.Info().Int64("lost_events", lostEvents).Msg("Lost events")
-
-				case "printf":
-					buf, err := dataEl.Iter.StringBytes()
-					assert.NoError(err)
-					var e vfsEvent
-					err = logfmt.Unmarshal(buf, &e)
-					assert.NoError(err)
-					err = e.Append(appender)
-					assert.NoError(err)
-				}
-				return nil
-			})
-		}
-		return nil
+		return writeToDuckDB(r, appender.AppendRow)
 	},
 }
