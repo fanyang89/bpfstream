@@ -19,6 +19,9 @@ func BenchmarkImportFromBpf(b *testing.B) {
 	dsn := "bench.ddb"
 	tableName := "append_bench"
 
+	_ = os.Remove(dsn)
+	_ = os.Remove(dsn + ".wal")
+
 	connector, err := duckdb.NewConnector(dsn, nil)
 	if err != nil {
 		b.Fatal(err)
@@ -68,5 +71,10 @@ func BenchmarkImportFromBpf(b *testing.B) {
 	}
 
 	elapsed := time.Now().Sub(now)
-	log.Info().Int64("elapsed_ns", elapsed.Nanoseconds()).Int("n", b.N).Msg("Done in time")
+	const rows = 321039
+	log.Info().
+		Int("n", b.N).
+		Int64("elapsed_ns", elapsed.Nanoseconds()).
+		Int64("ops", 1000000000/(elapsed.Nanoseconds()/4/rows)).
+		Msg("Done in time")
 }

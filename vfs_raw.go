@@ -48,9 +48,6 @@ var ErrUnknownField = errors.New("unknown field")
 func (e *vfsEvent) HandleLogfmt(key []byte, val []byte) (err error) {
 	k := string(key)
 	v := string(val)
-	if strings.HasSuffix(v, ",") {
-		v = strings.TrimSuffix(v, ",")
-	}
 	switch k {
 	case "ts":
 		e.Timestamp, err = strconv.ParseUint(v, 10, 64)
