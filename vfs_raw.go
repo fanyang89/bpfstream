@@ -15,6 +15,7 @@ import (
 	"github.com/minio/simdjson-go"
 	"github.com/negrel/assert"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 )
 
@@ -27,6 +28,8 @@ const createTableSql = `CREATE TABLE IF NOT EXISTS %s (
 	Inode UBIGINT,
 	"Offset" UBIGINT,
 	Length UBIGINT)`
+
+const dropTableSql = `DROP TABLE IF EXISTS %s`
 
 type vfsEvent struct {
 	Timestamp   uint64
@@ -106,6 +109,11 @@ var vfsRawCmd = &cli.Command{
 		}
 
 		db := sql.OpenDB(connector)
+		_, err = db.Exec(fmt.Sprintf(dropTableSql, tableName))
+		if err != nil {
+			return err
+		}
+
 		_, err = db.Exec(fmt.Sprintf(createTableSql, tableName))
 		if err != nil {
 			return err
@@ -172,6 +180,16 @@ var vfsRawCmd = &cli.Command{
 					timeStr = strings.TrimSpace(timeStr)
 					startTime, err = time.Parse(time.TimeOnly, timeStr)
 					assert.NoError(err)
+					log.Info().Str("start_time", startTime.Format(time.TimeOnly)).Msg("Record start from")
+
+				case "lost_events":
+					var eventCountEl *simdjson.Element
+					eventCountEl, err = dataEl.Iter.FindElement(eventCountEl, "events")
+					assert.NoError(err)
+					var lostEvents int64
+					lostEvents, err = eventCountEl.Iter.Int()
+					assert.NoError(err)
+					log.Info().Int64("lost_events", lostEvents).Msg("Lost events")
 
 				case "printf":
 					buf, err := dataEl.Iter.StringBytes()

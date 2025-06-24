@@ -4,3 +4,4 @@
 *.exe
 bpfstream
 *.ddb
+*.ddb.wal
