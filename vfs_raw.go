@@ -190,6 +190,8 @@ var vfsRawCmd = &cli.Command{
 		}
 
 		db := sql.OpenDB(connector)
+		defer func() { _ = db.Close() }()
+
 		_, err = db.Exec(fmt.Sprintf(dropTableSql, tableName))
 		if err != nil {
 			return err

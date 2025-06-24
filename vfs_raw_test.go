@@ -32,6 +32,8 @@ func BenchmarkImportFromBpf(b *testing.B) {
 	}
 
 	db := sql.OpenDB(connector)
+	defer func() { _ = db.Close() }()
+
 	_, err = db.Exec(fmt.Sprintf(dropTableSql, tableName))
 	if err != nil {
 		b.Fatal(err)
